@@ -1,6 +1,8 @@
 # ESPHome E-Ink Weather Calendar Wall Monitor
 This project provides a complete solution for a wall-mounted e-ink display powered by ESPHome and tightly integrated with Home Assistant. It displays weather, calendar events, room temperatures, and Slovenian date/time, with smart refresh logic and support for dark/light modes.
 
+**Element positioning was planned with this design simulator page (https://jnan.co/tools/displaysim/), which significantly reducing trial-and-error reflashing. I also used different AI to tweak some parts of the code, which again saved me a lot of time.**
+
 # Hardware needed
 
 + Xiao 7.5" (https://www.seeedstudio.com/XIAO-7-5-ePaper-Panel-p-6416.html)
