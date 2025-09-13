@@ -1,0 +1,570 @@
+esphome:
+  name: wall-monitor-dnevna
+  friendly_name: Wall Monitor Dnevna
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: esp-idf
+
+spi:
+  clk_pin: GPIO8
+  mosi_pin: GPIO10
+
+logger:
+
+api:
+  encryption:
+    key: "mC3kgTovIvLyNwf+rq8uRqTAMoJpDj3zY909UuF05Xs="
+  on_client_connected:
+    then:
+      # This 'if' condition ensures this logic only runs ONCE per boot.
+      - if:
+          condition:
+            lambda: 'return id(initial_refresh_done) == false;'
+          then:
+            - logger.log: "API connected. Waiting for initial sensor data..."
+            # Wait 10 seconds. This is a generous delay to ensure all
+            # your sensors have reported their first state from Home Assistant.
+            - delay: 10s
+            - logger.log: "Initial data assumed received. Triggering first screen refresh."
+            # Call the same script your HA automation uses.
+            - script.execute: update_screen
+            # Set the flag to true so this doesn't run again until the next reboot.
+            - lambda: 'id(initial_refresh_done) = true;'
+
+ota:
+  platform: esphome
+  password: "58b92643f2233ce448b377b52fe5708d"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Wall-Monitor-Dnevna"
+    password: "1Jqac2AV3UAh"
+
+captive_portal:
+
+mqtt:
+  broker: !secret mqtt_ip
+  username: !secret mqtt_user
+  password: !secret mqtt_password
+  id: mqtt_client
+  discovery: false
+
+font:
+  - file: fonts/GothamRnd-Regular.ttf
+    id: gotham_24
+    size: 24
+    extras:
+      - file: fonts/GothamRnd-Regular.ttf
+        glyphs: [
+          "Ž", "Č", "Š", "ž", "č", "š",
+          ]
+  - file: fonts/GothamRnd-Bold.ttf
+    id: gotham_bold_16
+    size: 16
+    extras:
+      - file: fonts/GothamRnd-Bold.ttf
+        glyphs: [
+          "Ž", "Č", "Š", "ž", "č", "š",
+          ]
+  - file: fonts/GothamRnd-Bold.ttf
+    id: gotham_bold_20
+    size: 20
+    extras:
+      - file: fonts/GothamRnd-Bold.ttf
+        glyphs: [
+          "Ž", "Č", "Š", "ž", "č", "š",
+          ]
+  - file: fonts/GothamRnd-Bold.ttf
+    id: gotham_bold_24
+    size: 24
+  - file: fonts/GothamRnd-Bold.ttf
+    id: gotham_bold_60
+    size: 60
+  - file: fonts/GothamRnd-Bold.ttf
+    id: gotham_bold_80
+    size: 80    
+  - file: "fonts/mdi.ttf"
+    id: font_mdi_large
+    size: 80
+    glyphs: [
+      "\U000F0590", # weather-cloudy
+      "\U000F0F2F", # weather-cloudy-alert
+      "\U000F0E6E", # weather-cloudy-arrow-right
+      "\U000F0591", # weather-fog
+      "\U000F0592", # weather-hail
+      "\U000F0F30", # weather-hazy
+      "\U000F0898", # weather-hurricane
+      "\U000F0593", # weather-lightning
+      "\U000F067E", # weather-lightning-rainy
+      "\U000F0594", # weather-night
+      "\U000F0F31", # weather-night-partly-cloudy
+      "\U000F0595", # weather-partly-cloudy
+      "\U000F0F32", # weather-partly-lightning
+      "\U000F0F33", # weather-partly-rainy
+      "\U000F0F34", # weather-partly-snowy
+      "\U000F0F35", # weather-partly-snowy-rainy
+      "\U000F0596", # weather-pouring
+      "\U000F0597", # weather-rainy
+      "\U000F0598", # weather-snowy
+      "\U000F0F36", # weather-snowy-heavy
+      "\U000F067F", # weather-snowy-rainy
+      "\U000F0599", # weather-sunny
+      "\U000F0F37", # weather-sunny-alert
+      "\U000f14e4", # weather-sunny-off
+      "\U000F059A", # weather-sunset
+      "\U000F059B", # weather-sunset-down
+      "\U000F059C", # weather-sunset-up
+      "\U000F0F38", # weather-tornado
+      "\U000F059D", # weather-windy
+      "\U000F059E", # weather-windy-variant
+      "\U000F181E", # mdi-door-sliding
+      "\U000F1820", # mdi-door-sliding-open
+      "\U000F171D", # mdi-fan-auto
+      "\U000F081D", # mdi-fan-off
+      "\U000F0210", # mdi-fan
+      "\U000F0567", # mdi-video
+      "\U000F0568", # mdi-video-off
+      "\U000F044B", # mdi-record-rec
+      "\U000F0004", # mdi-account
+      "\U000F0012", # mdi-account-off
+      "\U000F00EB", # mdi-cake-Variant
+      "\U000F17FF", # mdi-sun-wireless-outline
+      "\U000F011B", # mdi-cat
+    ]
+  - file: "fonts/mdi.ttf"
+    id: font_mdi_medium
+    size: 40
+    glyphs: [
+      "\U000F0590", # weather-cloudy
+      "\U000F0F2F", # weather-cloudy-alert
+      "\U000F0E6E", # weather-cloudy-arrow-right
+      "\U000F0591", # weather-fog
+      "\U000F0592", # weather-hail
+      "\U000F0F30", # weather-hazy
+      "\U000F0898", # weather-hurricane
+      "\U000F0593", # weather-lightning
+      "\U000F067E", # weather-lightning-rainy
+      "\U000F0594", # weather-night
+      "\U000F0F31", # weather-night-partly-cloudy
+      "\U000F0595", # weather-partly-cloudy
+      "\U000F0F32", # weather-partly-lightning
+      "\U000F0F33", # weather-partly-rainy
+      "\U000F0F34", # weather-partly-snowy
+      "\U000F0F35", # weather-partly-snowy-rainy
+      "\U000F0596", # weather-pouring
+      "\U000F0597", # weather-rainy
+      "\U000F0598", # weather-snowy
+      "\U000F0F36", # weather-snowy-heavy
+      "\U000F067F", # weather-snowy-rainy
+      "\U000F0599", # weather-sunny
+      "\U000F0F37", # weather-sunny-alert
+      "\U000F14E4", # weather-sunny-off
+      "\U000F059A", # weather-sunset
+      "\U000F059B", # weather-sunset-down
+      "\U000F059C", # weather-sunset-up
+      "\U000F0F38", # weather-tornado
+      "\U000F059D", # weather-windy
+      "\U000F059E", # weather-windy-variant
+      "\U000F181E", # mdi-door-sliding
+      "\U000F1820", # mdi-door-sliding-open
+      "\U000F171D", # mdi-fan-auto
+      "\U000F081D", # mdi-fan-off
+      "\U000F0210", # mdi-fan
+      "\U000F0567", # mdi-video
+      "\U000F0568", # mdi-video-off
+      "\U000F044B", # mdi-record-rec
+      "\U000F0004", # mdi-account
+      "\U000F0012", # mdi-account-off
+      "\U000F00EB", # mdi-cake-Variant
+      "\U000F17FF", # mdi-sun-wireless-outline
+      "\U000F011B", # mdi-cat
+    ]
+
+time:
+  - platform: homeassistant
+    id: ha_time
+
+button:
+  ### Restart display button
+  - platform: restart
+    name: "Restart"
+  ### Force screen refresh button
+  - platform: template
+    name: "Refresh Screen"
+    entity_category: config
+    on_press:
+      - script.execute: update_screen
+
+select:
+  - platform: template
+    name: Appearance
+    id: appearance
+    options:
+     - "Light Mode"      
+     - "Dark Mode"
+    initial_option: "Light Mode"
+    restore_value: true
+    optimistic: true
+    entity_category: config
+    on_value:
+      then:
+        - script.execute: update_screen
+
+display:
+  - platform: waveshare_epaper
+    id: eink_display
+    cs_pin: GPIO3
+    dc_pin: GPIO5
+    busy_pin: 
+      number: GPIO4
+      inverted: true
+    reset_pin: GPIO2
+    model: 7.50inv2
+    update_interval: never
+    lambda: |-
+
+      ///////////////////////
+      // DARK MODE/LIGHT MODE
+      ///////////////////////
+
+      // Default mode is light
+      auto color_bg = Color::BLACK;
+      auto color_text = Color::WHITE;
+      
+      auto index = id(appearance).active_index();
+      
+      if (index.has_value()) {
+        if (index.value() == 0) {
+          // LIGHT MODE (We want White BG, Black Text)
+          ESP_LOGD("custom", "Light Mode selected. Applying swapped colors.");
+          // To get a WHITE BG, we must call fill() with Color::BLACK
+          // To get BLACK text, we must call printf() with Color::WHITE
+          color_bg   = Color::BLACK;
+          color_text = Color::WHITE;
+        } else {
+          // DARK MODE (We want Black BG, White Text)
+          ESP_LOGD("custom", "Dark Mode selected. Applying swapped colors.");
+          // To get a BLACK BG, we must call fill() with Color::WHITE
+          // To get WHITE text, we must call printf() with Color::BLACK
+          color_bg   = Color::WHITE;
+          color_text = Color::BLACK;
+        }
+      }
+
+      // Fill background with the now-correctly-swapped color
+      it.fill(color_bg);
+
+      ///////////////////////
+      // CALENDAR (RIGHT SIDE)
+      ///////////////////////
+      
+      // Get the full calendar text from Home Assistant. We add a newline at the end
+      // to ensure the loop processes the very last line correctly.
+      std::string text = id(calendar_text).state + "\n";
+
+      int x = 420;
+      int y = 20; // Your new starting position
+      
+      int y_limit = 470; 
+      bool truncated = false;
+
+      // This reserves 30 pixels at the bottom for the "..." text.
+      int y_limit_for_content = y_limit - 30;
+
+      size_t pos = 0;
+      size_t found_pos;
+
+      // Loop over all the lines, breaking at new line character
+      while ((found_pos = text.find("\n", pos)) != std::string::npos) {
+        std::string line = text.substr(pos, found_pos - pos);
+
+        // --- Process the extracted line ---
+
+        // Check if the line is an event item (starts with "- ")
+        if (line.rfind("- ", 0) == 0) {
+          if (y + 30 > y_limit_for_content) { 
+            truncated = true;
+            break; 
+          }
+          it.printf(x + 15, y, id(gotham_24), color_text, "%s", line.substr(2).c_str());
+          y += 30;
+        } 
+        // Check if the line is empty (a separator between days)
+        else if (line.length() == 0) {
+          if (y + 15 > y_limit_for_content) { 
+            truncated = true;
+            break; 
+          }
+          y += 15;
+        }
+        // Otherwise, it must be a date header
+        else {
+          if (y + 28 > y_limit_for_content) { 
+            truncated = true;
+            break; 
+          }
+          it.printf(x, y, id(gotham_bold_20), color_text, "%s", line.c_str());
+          y += 28;
+        }
+
+        pos = found_pos + 1;
+      }
+      
+      // If the text was cut short, draw "..." at the end.
+      if (truncated) {
+        it.printf(x, y, id(gotham_24), color_text, "...");
+      }
+
+      ////////////////////
+      // WEATHER LEFT SIDE OF SCREEN
+      ////////////////////
+
+      // Map weather states to MDI characters.
+      std::map<std::string, std::string> weather_icon_map
+        {
+          {"cloudy", "\U000F0590"},
+          {"cloudy-alert", "\U000F0F2F"},
+          {"cloudy-arrow-right", "\U000F0E6E"},
+          {"fog", "\U000F0591"},
+          {"hail", "\U000F0592"},
+          {"hazy", "\U000F0F30"},
+          {"hurricane", "\U000F0898"},
+          {"lightning", "\U000F0593"},
+          {"lightning-rainy", "\U000F067E"},
+          {"clear-night", "\U000F0594"},
+          {"night-partly-cloudy", "\U000F0F31"},
+          {"partlycloudy", "\U000F0595"},
+          {"partly-lightning", "\U000F0F32"},
+          {"partly-rainy", "\U000F0F33"},
+          {"partly-snowy", "\U000F0F34"},
+          {"partly-snowy-rainy", "\U000F0F35"},
+          {"pouring", "\U000F0596"},
+          {"rainy", "\U000F0597"},
+          {"snowy", "\U000F0598"},
+          {"snowy-heavy", "\U000F0F36"},
+          {"snowy-rainy", "\U000F067F"},
+          {"sunny", "\U000F0599"},
+          {"sunny-alert", "\U000F0F37"},
+          {"sunny-off", "\U000F14E4"},
+          {"sunset", "\U000F059A"},
+          {"sunset-down", "\U000F059B"},
+          {"sunset-up", "\U000F059C"},
+          {"tornado", "\U000F0F38"},
+          {"windy", "\U000F059D"},
+          {"windy-variant", "\U000F059E"},
+        };
+
+        // Array of weekday names (starting with Sunday = 0)
+        const char* days[] = {"Nedelja", "Ponedeljek", "Torek", "Sreda", "Četrtek", "Petek", "Sobota"};
+
+        // Get current weekday
+        int today = id(ha_time).now().day_of_week - 1;
+
+        // Bathroom
+        it.printf(341, 444, id(gotham_bold_24), color_text, TextAlign::CENTER, "%.1f °C", id(bathroom_temperature).state);
+        it.printf(341, 418, id(gotham_bold_16), color_text, TextAlign::CENTER, "Kopalnica");
+        
+        // WC
+        it.printf(208, 444, id(gotham_bold_24), color_text, TextAlign::CENTER, "%.1f °C", id(wc_temperature).state);
+        it.printf(208, 418, id(gotham_bold_16), color_text, TextAlign::CENTER, "WC");
+        
+        // Erker
+        it.printf(76, 444, id(gotham_bold_24), color_text, TextAlign::CENTER, "%.1f °C", id(erker_temperature).state);
+        it.printf(76, 418, id(gotham_bold_16), color_text, TextAlign::CENTER, "Erker");
+        
+        // Zan
+        it.printf(340, 355, id(gotham_bold_24), color_text, TextAlign::CENTER, "%.1f °C", id(zan_temperature).state);
+        it.printf(340, 327, id(gotham_bold_16), color_text, TextAlign::CENTER, "Žan");
+        
+        // Lara Eva
+        it.printf(207, 355, id(gotham_bold_24), color_text, TextAlign::CENTER, "%.1f °C", id(lara_eva_temperature).state);
+        it.printf(207, 327, id(gotham_bold_16), color_text, TextAlign::CENTER, "Lara Eva");
+        
+        // Bedroom
+        it.printf(73, 355, id(gotham_bold_24), color_text, TextAlign::CENTER, "%.1f °C", id(bedroom_temperature).state);
+        it.printf(73, 327, id(gotham_bold_16), color_text, TextAlign::CENTER, "Spalnica");
+        
+        // Forecast 3
+        it.printf(340, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "%s", days[(today + 3) % 7]);
+        it.printf(357, 255, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d3_temperature_forecast).state);
+        it.printf(357, 275, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d3_temperature_low_forecast).state);
+        it.printf(283, 245, id(font_mdi_medium), color_text, "%s", weather_icon_map[id(d3_weather_forecast).state.c_str()].c_str());
+
+        // Forecast 2
+        it.printf(210, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "%s", days[(today + 2) % 7]);
+        it.printf(227, 255, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d2_temperature_forecast).state);
+        it.printf(227, 275, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d2_temperature_low_forecast).state);
+        it.printf(153, 245, id(font_mdi_medium), color_text, "%s", weather_icon_map[id(d2_weather_forecast).state.c_str()].c_str());
+
+        // Forecast 1
+        it.printf(70, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "Jutri");
+        it.printf(95, 255, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d1_temperature_forecast).state);
+        it.printf(95, 275, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d1_temperature_low_forecast).state);
+        it.printf(19,  245, id(font_mdi_medium), color_text, "%s", weather_icon_map[id(d1_weather_forecast).state.c_str()].c_str());
+
+        // Current outdoor temperature
+        it.printf(163, 133, id(gotham_bold_60), color_text, "%.1f °C", id(outdoor_temperatore).state);
+        it.printf(34,  110, id(font_mdi_large), color_text, "%s", weather_icon_map[id(current_weather).state.c_str()].c_str());
+
+        // Time
+        it.printf(200, 105, id(gotham_bold_80), color_text, TextAlign::CENTER, "%s", id(slo_time).state.c_str());
+
+        // Date
+        it.printf(200, 40, id(gotham_bold_20), color_text, TextAlign::CENTER, "%s", id(slo_date).state.c_str());
+
+        ////////////////
+        // Rectangles //
+        ////////////////
+
+        // Vertical line
+        it.line(405, 5, 405, 475, color_text);
+
+        // Kopalnica
+        it.rectangle(275, 390, 125, 80, color_text);
+
+        // WC
+        it.rectangle(143, 390, 125, 80, color_text);
+        
+        // Erker
+        it.rectangle(10, 390, 125, 80, color_text);
+        
+        // Žan
+        it.rectangle(275, 300, 125, 80, color_text);
+        
+        // Lara Eva
+        it.rectangle(143, 300, 125, 80, color_text);
+
+        // Bedroom
+        it.rectangle(10, 300, 125, 80, color_text);
+        
+        // One big rectangle around all forecasts
+        it.rectangle(10, 210, 390, 80, color_text);
+
+        // Vertical separator after Forecast 1
+        it.line(135, 210, 135, 290, color_text);
+
+        // Vertical separator after Forecast 2
+        it.line(268, 210, 268, 290, color_text);        
+
+        // Current outside temperature
+        // it.rectangle(10, 110, 390, 95, color_text);
+
+        // Date and time
+        // it.rectangle(10, 10, 390, 95, color_text);
+
+        // Date and time and current temperature
+        it.rectangle(10, 10, 390, 190, color_text);
+
+        // Outside
+        it.rectangle(5, 5, 790, 470, color_text);
+
+sensor:
+  ### To count number of refreshes
+  - platform: template
+    name: "Display Refresh Count"
+    id: display_refresh_count
+    icon: "mdi:refresh"
+    unit_of_measurement: "refreshes"
+    state_class: total_increasing  
+  ### Room temperatures
+  - platform: homeassistant
+    entity_id: sensor.espresence_bathroom_temperature
+    id: bathroom_temperature
+  - platform: homeassistant
+    entity_id: sensor.espresence_bedroom_temperature
+    id: bedroom_temperature
+  - platform: homeassistant
+    entity_id: sensor.espresence_lara_eva_temperature
+    id: lara_eva_temperature
+  - platform: homeassistant
+    entity_id: sensor.espresence_zan_temperature
+    id: zan_temperature
+  - platform: homeassistant
+    entity_id: sensor.espresence_erker_temperature
+    id: erker_temperature
+  - platform: homeassistant
+    entity_id: sensor.espresence_wc_temperature
+    id: wc_temperature
+  - platform: homeassistant
+  ### Outdoor temperature
+    entity_id: sensor.wittboy_pro_outdoor_temperature
+    id: outdoor_temperatore
+  ### Day 1 temperature forecast
+  - platform: homeassistant
+    id: d1_temperature_forecast
+    entity_id: sensor.d1_temperature_forecast
+  ### Day 1 temperature low forecast
+  - platform: homeassistant
+    id: d1_temperature_low_forecast
+    entity_id: sensor.d1_temperature_low_forecast
+  ### Day 2 temperature forecast
+  - platform: homeassistant
+    id: d2_temperature_forecast
+    entity_id: sensor.d2_temperature_forecast
+  ### Day 2 temperature low forecast
+  - platform: homeassistant
+    id: d2_temperature_low_forecast
+    entity_id: sensor.d2_temperature_low_forecast
+  ### Day 3 temperature forecast
+  - platform: homeassistant
+    id: d3_temperature_forecast
+    entity_id: sensor.d3_temperature_forecast
+  ### Day 3 temperature low forecast
+  - platform: homeassistant
+    id: d3_temperature_low_forecast
+    entity_id: sensor.d3_temperature_low_forecast
+  ### Current Wifi Signal
+  - platform: wifi_signal
+    name: "WiFi Signal Sensor"
+    id: wifisignal
+    update_interval: 60s
+text_sensor:
+  ### Calendar entries
+  - platform: mqtt_subscribe
+    id: calendar_text
+    topic: "esphome/wall_monitor/calendar_text"
+  ### Slovenian date and time
+  - platform: homeassistant
+    entity_id: sensor.slovenian_time
+    id: slo_time    
+  - platform: homeassistant
+    entity_id: sensor.slovenian_date
+    id: slo_date
+  ### Current weather as description
+  - platform: homeassistant
+    id: current_weather
+    entity_id: sensor.weathercurrent
+  ### Forecast
+  - platform: homeassistant
+    id: d1_weather_forecast
+    entity_id: sensor.d1_weather_forecast    
+  - platform: homeassistant
+    id: d2_weather_forecast
+    entity_id: sensor.d2_weather_forecast    
+  - platform: homeassistant
+    id: d3_weather_forecast
+    entity_id: sensor.d3_weather_forecast    
+
+globals:
+  - id: initial_refresh_done
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: recorded_display_refresh
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+script:
+  - id: update_screen
+    then:
+      - component.update: eink_display
+      - lambda: |-
+          // 1. Increment the C++ global variable
+          id(recorded_display_refresh) += 1;
+          // 2. Publish the new value to our Home Assistant sensor
+          id(display_refresh_count).publish_state(id(recorded_display_refresh));

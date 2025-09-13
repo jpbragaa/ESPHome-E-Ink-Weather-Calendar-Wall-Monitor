@@ -1,0 +1,13 @@
+template:
+  - sensor:
+      - name: "Slovenian Time"
+        unique_id: slovenian_time
+        state: >
+          {{ now().strftime('%H:%M') }}  
+      - name: "Slovenian Date"
+        unique_id: slovenian_date
+        state: >
+          {% set dni = ['Ponedeljek','Torek','Sreda','Četrtek','Petek','Sobota','Nedelja'] %}
+          {% set meseci = ['januar','februar','marec','april','maj','junij','julij',
+                           'avgust','september','oktober','november','december'] %}
+          {{ dni[now().weekday()] }}, {{ now().day }}. {{ meseci[now().month-1] }} {{ now().year }}

@@ -1,0 +1,87 @@
+automation:
+  - alias: "Update Combined Calendar Text via MQTT"
+    id: update_combined_calendar_text_mqtt
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: "/10"
+      - platform: homeassistant
+        event: start
+    action:
+      # --- Get events from ALL calendars in a single call ---
+      - service: calendar.get_events
+        target:
+          entity_id:
+            - calendar.druzinski
+            - calendar.mleko
+            - calendar.odvoz_smeti
+        data:
+          duration:
+            days: 7
+        response_variable: all_calendar_data
+
+      # --- Process events and PUBLISH the result to an MQTT topic ---
+      - service: mqtt.publish
+        data:
+          topic: "esphome/wall_monitor/calendar_text"
+          retain: true
+          payload: >-
+            {%- set druzinski_events = all_calendar_data.get('calendar.druzinski', {}).get('events', []) %}
+            {%- set mleko_events = all_calendar_data.get('calendar.mleko', {}).get('events', []) %}
+            {%- set smeti_events = all_calendar_data.get('calendar.odvoz_smeti', {}).get('events', []) %}
+            {%- set all_events = druzinski_events + mleko_events + smeti_events %}
+            {%- set sorted_events = all_events | sort(attribute='start') %}
+            
+            {# Get current time once for efficiency #}
+            {%- set current_time = now() %}
+            {%- set today = current_time.date() %}
+            {%- set tomorrow = today + timedelta(days=1) %}
+
+            {%- set day_names = {0: 'Ponedeljek', 1: 'Torek', 2: 'Sreda', 3: 'Četrtek', 4: 'Petek', 5: 'Sobota', 6: 'Nedelja'} %}
+            {%- set month_names = {1: 'januar', 2: 'februar', 3: 'marec', 4: 'april', 5: 'maj', 6: 'junij', 7: 'julij', 8: 'avgust', 9: 'september', 10: 'oktober', 11: 'november', 12: 'december'} %}
+            
+            {%- set ns = namespace(last_day=none, output=[]) %}
+            {%- for event in sorted_events %}
+              {%- set start_dt = as_datetime(event.start) %}
+              {%- set event_day = start_dt.date() %}
+
+              {# ========================================================== #}
+              {# ===== FILTER OUT EXPIRED EVENTS FOR THE CURRENT DAY ====== #}
+              {# ========================================================== #}
+              {%- if event_day == today %}
+                {# Rule 1: For all-day events (no 'T' in start string), hide after 15:00 #}
+                {%- if 'T' not in event.start and current_time.hour >= 15 %}
+                  {%- continue %} {# Skip to the next event in the loop #}
+                {%- endif %}
+                
+                {# Rule 2: For timed events, hide 30 minutes after they start #}
+                {%- if 'T' in event.start and current_time > (start_dt + timedelta(minutes=30)) %}
+                  {%- continue %} {# Skip to the next event in the loop #}
+                {%- endif %}
+              {%- endif %}
+              {# =================== END OF FILTERING =================== #}
+
+              {# This part only runs if the event was not skipped #}
+              {%- if event_day != ns.last_day %}
+                {%- set ns.last_day = event_day %}
+                {%- set day_str = start_dt.day ~ '. ' ~ month_names[start_dt.month] ~ ' ' ~ start_dt.year %}
+                {%- if event_day == today %}
+                  {%- set header = 'Danes, ' ~ day_str ~ ':' %}
+                {%- elif event_day == tomorrow %}
+                  {%- set header = 'Jutri, ' ~ day_str ~ ':' %}
+                {%- else %}
+                  {%- set header = day_names[start_dt.weekday()] ~ ', ' ~ day_str ~ ':' %}
+                {%- endif %}
+                {%- if not loop.first %}{%- set ns.output = ns.output + [''] %}{%- endif %}
+                {%- set ns.output = ns.output + [header] %}
+              {%- endif %}
+              
+              {%- set summary_text = event.summary %}
+              {%- if 'T' in event.start %}
+                {%- set start_time = start_dt.strftime('%H:%M') %}
+                {%- set summary_text = summary_text ~ ' (' ~ start_time ~ ')' %}
+              {%- endif %}
+              
+              {%- set ns.output = ns.output + ['- ' ~ summary_text] %}
+            {%- endfor %}
+            {{ ns.output | join('\n') }}

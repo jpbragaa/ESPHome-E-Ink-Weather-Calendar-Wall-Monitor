@@ -1,0 +1,59 @@
+automation:
+  - alias: "E-Ink Display Smart Refresh"
+    id: eink_display_smart_refresh
+    description: "Refreshes the e-ink screen every minute, except during quiet night hours, unless presence or a light is detected. Includes a 1-minute cooldown."
+
+    trigger:
+      # 1. The main timer: Fires every minute, one second past the minute.
+      - platform: time_pattern
+        seconds: "1"
+        id: every_minute_timer
+
+      # 2. Activity Triggers: Fires if any of these lights or sensors turn ON.
+      - platform: state
+        entity_id:
+          - light.bulb_bedroom
+          - light.bulb_lara_eva
+          - light.bulb_zan
+          - light.bulb_bathroom
+          - light.ikea_bulb_lara_eva
+          - light.ikea_bulb_zan
+          - light.kuhinja_luc
+          - light.dining
+          - light.wled_nightlamp_andrej
+          - light.wled_nightlamp_simona
+          - binary_sensor.athom_presence_hodnik_occupancy
+          - binary_sensor.athom_presence_wc_occupancy
+        to: 'on'
+
+    condition:
+      # This enforces the "not more than once per minute" rule (cooldown).
+      - condition: template
+        value_template: >-
+          {{ this.attributes.last_triggered is none or
+             (now() - this.attributes.last_triggered).total_seconds() > 59 }}
+
+    action:
+      - choose:
+          # --- CASE 1: The trigger was the main timer (identified by its ID) ---
+          - conditions:
+              - condition: trigger
+                id: 'every_minute_timer' # <--- CHANGE THIS LINE
+              # And the time is NOT between 00:05 and 04:55
+              - condition: time
+                after: '04:55:00'
+                before: '00:05:00'
+            sequence:
+              - service: button.press
+                target:
+                  entity_id:
+                    - button.wall_monitor_dnevna_refresh_screen
+                    - button.wall_monitor_stopnice_refresh_screen
+
+        # --- DEFAULT CASE: If the trigger was NOT the timer (i.e., it was a light or sensor) ---
+        default:
+          - service: button.press
+            target:
+              entity_id:
+                - button.wall_monitor_dnevna_refresh_screen
+                - button.wall_monitor_stopnice_refresh_screen

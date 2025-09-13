@@ -1,0 +1,114 @@
+template:
+  - trigger:
+      - platform: time_pattern
+        hours: "/1"
+      - platform: homeassistant
+        event: start
+    action:
+      - service: weather.get_forecasts
+        data:
+          type: daily
+        target:
+          entity_id: weather.arso_vreme_litija
+        response_variable: arso_daily
+      - service: weather.get_forecasts
+        data:
+          type: hourly
+        target:
+          entity_id: weather.arso_vreme_litija
+        response_variable: arso_hourly
+    sensor:
+      - name: "Weather Daily Weather Forecast"
+        unique_id: weather_forecast_daily
+        state: "{{ now().isoformat() }}"
+        attributes:
+          forecast: >
+            {{ arso_daily['weather.arso_vreme_litija'].forecast
+               if arso_daily is defined else [] }}
+
+      - name: "Weather Hourly Weather Forecast"
+        unique_id: weather_forecast_hourly
+        state: "{{ now().isoformat() }}"
+        attributes:
+          forecast: >
+            {{ arso_hourly['weather.arso_vreme_litija'].forecast
+               if arso_hourly is defined else [] }}
+              
+     #Sensors for current weather data (sunny, cloudly, ...)
+      - name: "WeatherCurrent"
+        unique_id: "WeatherCurrent"
+        state: "{{ states('weather.arso_vreme_litija') }}"
+      - name: "TempCurrent"
+        unit_of_measurement: "°C"
+        state: >
+          {{ state_attr('weather.arso_vreme_litija', 'temperature') }}        
+      #Sensors for forecast weather data#
+      - name: D1 Weather Forecast
+        unique_id: d1_wather_forecast
+        state: "{{ arso_daily['weather.arso_vreme_litija'].forecast[1].condition }}"
+      - name: D1 Temperature Forecast
+        unique_id: d1_temperature_forecast
+        state: "{{ arso_daily['weather.arso_vreme_litija'].forecast[1].temperature }}"
+        unit_of_measurement: °C
+      - name: D1 Temperature Low Forecast
+        unique_id: d1_temperature_low_forecast
+        state: "{{ arso_daily['weather.arso_vreme_litija'].forecast[1].templow}}"
+        unit_of_measurement: °C
+      - name: D2 Weather Forecast
+        unique_id: d2_wather_forecast
+        state: "{{ arso_daily['weather.arso_vreme_litija'].forecast[2].condition }}"
+      - name: D2 Temperature Forecast
+        unique_id: d2_temperature_forecast
+        state: "{{ arso_daily['weather.arso_vreme_litija'].forecast[2].temperature }}"
+        unit_of_measurement: °C
+      - name: D2 Temperature Low Forecast
+        unique_id: d2_temperature_low_forecast
+        state: "{{ arso_daily['weather.arso_vreme_litija'].forecast[2].templow}}"
+        unit_of_measurement: °C
+      - name: D3 Weather Forecast
+        unique_id: d3_wather_forecast
+        state: "{{ arso_daily['weather.arso_vreme_litija'].forecast[3].condition }}"
+      - name: D3 Temperature Forecast
+        unique_id: d3_temperature_forecast
+        state: "{{ arso_daily['weather.arso_vreme_litija'].forecast[3].temperature }}"
+        unit_of_measurement: °C
+      - name: D3 Temperature Low Forecast
+        unique_id: d3_temperature_low_forecast
+        state: "{{ arso_daily['weather.arso_vreme_litija'].forecast[3].templow}}"
+        unit_of_measurement: °C
+               
+weather:
+  - platform: template
+    name: "Ecowitt"
+    condition_template: "{{ states('weather.arso_vreme_litija') }}"
+    temperature_template: "{{ states('sensor.wittboy_pro_outdoor_temperature') | float(0) }}"
+    temperature_unit: "°C"
+    humidity_template: "{{ states('sensor.wittboy_pro_humidity') | float(0) }}"
+    pressure_template: "{{ states('sensor.wittboy_pro_absolute_pressure') | float(0) }}"
+    pressure_unit: "hPa"
+    wind_bearing_template: "{{ states('sensor.wittboy_pro_wind_direction') | int(0) }}"
+    wind_speed_template: "{{ states('sensor.wittboy_pro_wind_speed') | float(0) }}"
+    wind_speed_unit: "km/h"
+    forecast_daily_template: >
+      {% set f = state_attr('weather.arso_vreme_litija', 'forecast') or [] %}
+      {{ f | map(attribute='__dict__') 
+            | map('dict',
+                   datetime='datetime',
+                   temperature='temperature',
+                   templow='templow',
+                   condition='condition',
+                   precipitation='precipitation',
+                   wind_bearing='wind_bearing',
+                   wind_speed='wind_speed')
+            | list }}
+
+    forecast_hourly_template: >
+      {% set f = state_attr('weather.arso_vreme_litija', 'forecast') or [] %}
+      {{ f | map('dict',
+                   datetime='datetime',
+                   temperature='temperature',
+                   condition='condition',
+                   precipitation='precipitation',
+                   wind_bearing='wind_bearing',
+                   wind_speed='wind_speed')
+            | list }}
