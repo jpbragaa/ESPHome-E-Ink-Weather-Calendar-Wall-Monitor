@@ -5,8 +5,9 @@ This project provides a complete solution for a wall-mounted e-ink display power
 
 # Hardware needed
 
-+ Xiao 7.5" (https://www.seeedstudio.com/XIAO-7-5-ePaper-Panel-p-6416.html)
++ Xiao 7.5" (https://www.seeedstudio.com/XIAO-7-5-ePaper-Panel-p-6416.html) - price for two was 125,18 € (Aliexpress)
 + Can be powered via USB-C cable, left running on battery or **permanent power directly to +5V and GND PIN on ESP chip**
++ Display fits perfectly in Ikea frame model RÖDALM with dimensions 13x18 cm (price in Ikea Slovenia was 3,49 € per frame)
 
 # Structure
 ## ESPHome Source (esphome-wall-monitor.yaml)
