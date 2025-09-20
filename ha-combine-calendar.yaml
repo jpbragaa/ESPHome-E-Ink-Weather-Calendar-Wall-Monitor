@@ -46,7 +46,7 @@ automation:
               {%- set event_day = start_dt.date() %}
 
               {# ========================================================== #}
-              {# ===== FILTER OUT EXPIRED EVENTS FOR THE CURRENT DAY ====== #}
+              {# === NEW: FILTER OUT EXPIRED EVENTS FOR THE CURRENT DAY === #}
               {# ========================================================== #}
               {%- if event_day == today %}
                 {# Rule 1: For all-day events (no 'T' in start string), hide after 15:00 #}
@@ -78,7 +78,7 @@ automation:
               
               {%- set summary_text = event.summary %}
               {%- if 'T' in event.start %}
-                {%- set start_time = start_dt.strftime('%H:%M') %}
+                {%- set start_time = start_dt.strftime('%-H:%M') %}
                 {%- set summary_text = summary_text ~ ' (' ~ start_time ~ ')' %}
               {%- endif %}
               

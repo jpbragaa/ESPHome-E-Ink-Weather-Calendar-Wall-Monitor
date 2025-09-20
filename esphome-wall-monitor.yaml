@@ -361,8 +361,43 @@ display:
         // Array of weekday names (starting with Sunday = 0)
         const char* days[] = {"Nedelja", "Ponedeljek", "Torek", "Sreda", "Četrtek", "Petek", "Sobota"};
 
-        // Get current weekday
-        int today = id(ha_time).now().day_of_week - 1;
+        // Get current weekday and hour
+        int today_dow = id(ha_time).now().day_of_week - 1; // 0 for Sunday, 1 for Monday...
+        int current_hour = id(ha_time).now().hour;
+
+        // Logic for setting forecast days based on time
+        if (current_hour < 14) {
+          id(forecast_day_1_idx) = 0; // Today (d0)
+          id(forecast_day_2_idx) = 1; // Tomorrow (d1)
+          id(forecast_day_3_idx) = 2; // Day after tomorrow (d2)
+        } else {
+          id(forecast_day_1_idx) = 1; // Tomorrow (d1)
+          id(forecast_day_2_idx) = 2; // Day after tomorrow (d2)
+          id(forecast_day_3_idx) = 3; // Two days ahead (d3)
+        }
+
+        // Helper function to get the correct sensor based on index
+        auto get_forecast_temp = [&](int day_idx) {
+          if (day_idx == 0) return id(d0_temperature_forecast).state;
+          if (day_idx == 1) return id(d1_temperature_forecast).state;
+          if (day_idx == 2) return id(d2_temperature_forecast).state;
+          if (day_idx == 3) return id(d3_temperature_forecast).state;
+          return 0.0f; // Default or error value
+        };
+        auto get_forecast_low_temp = [&](int day_idx) {
+          if (day_idx == 0) return id(d0_temperature_low_forecast).state;
+          if (day_idx == 1) return id(d1_temperature_low_forecast).state;
+          if (day_idx == 2) return id(d2_temperature_low_forecast).state;
+          if (day_idx == 3) return id(d3_temperature_low_forecast).state;
+          return 0.0f; // Default or error value
+        };
+        auto get_forecast_weather = [&](int day_idx) {
+          if (day_idx == 0) return id(d0_weather_forecast).state;
+          if (day_idx == 1) return id(d1_weather_forecast).state;
+          if (day_idx == 2) return id(d2_weather_forecast).state;
+          if (day_idx == 3) return id(d3_weather_forecast).state;
+          return std::string(""); // Default or error value
+        };
 
         // Bathroom
         it.printf(341, 444, id(gotham_bold_24), color_text, TextAlign::CENTER, "%.1f °C", id(bathroom_temperature).state);
@@ -388,24 +423,38 @@ display:
         it.printf(73, 355, id(gotham_bold_24), color_text, TextAlign::CENTER, "%.1f °C", id(bedroom_temperature).state);
         it.printf(73, 327, id(gotham_bold_16), color_text, TextAlign::CENTER, "Spalnica");
         
-        // Forecast 3
-        it.printf(340, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "%s", days[(today + 3) % 7]);
-        it.printf(357, 255, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d3_temperature_forecast).state);
-        it.printf(357, 275, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d3_temperature_low_forecast).state);
-        it.printf(283, 245, id(font_mdi_medium), color_text, "%s", weather_icon_map[id(d3_weather_forecast).state.c_str()].c_str());
+        // Forecast 3 (This will be d2 or d3 depending on time)
+        // This remains a generic weekday label based on `forecast_day_3_idx`
+        it.printf(340, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "%s", days[(today_dow + id(forecast_day_3_idx)) % 7]);
+        it.printf(357, 255, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", get_forecast_temp(id(forecast_day_3_idx)));
+        it.printf(357, 275, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", get_forecast_low_temp(id(forecast_day_3_idx)));
+        it.printf(283, 245, id(font_mdi_medium), color_text, "%s", weather_icon_map[get_forecast_weather(id(forecast_day_3_idx)).c_str()].c_str());
 
-        // Forecast 2
-        it.printf(210, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "%s", days[(today + 2) % 7]);
-        it.printf(227, 255, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d2_temperature_forecast).state);
-        it.printf(227, 275, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d2_temperature_low_forecast).state);
-        it.printf(153, 245, id(font_mdi_medium), color_text, "%s", weather_icon_map[id(d2_weather_forecast).state.c_str()].c_str());
+        // Forecast 2 (This will be d1 or d2 depending on time)
+        // This should always be "Jutri" if it's showing the next day's forecast
+        // or the specific weekday if it's the day after tomorrow.
+        std::string forecast_2_label;
+        if (id(forecast_day_2_idx) == 1 && current_hour < 14) { // This means it's showing d1 and before 14:00
+          forecast_2_label = "Jutri";
+        } else { // After 14:00 (d2), or if it's d2 before 14:00 (which it would be if d0,d1,d2)
+          forecast_2_label = days[(today_dow + id(forecast_day_2_idx)) % 7];
+        }
+        it.printf(210, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "%s", forecast_2_label.c_str());
+        it.printf(227, 255, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", get_forecast_temp(id(forecast_day_2_idx)));
+        it.printf(227, 275, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", get_forecast_low_temp(id(forecast_day_2_idx)));
+        it.printf(153, 245, id(font_mdi_medium), color_text, "%s", weather_icon_map[get_forecast_weather(id(forecast_day_2_idx)).c_str()].c_str());
 
-        // Forecast 1
-        it.printf(70, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "Jutri");
-        it.printf(95, 255, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d1_temperature_forecast).state);
-        it.printf(95, 275, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", id(d1_temperature_low_forecast).state);
-        it.printf(19,  245, id(font_mdi_medium), color_text, "%s", weather_icon_map[id(d1_weather_forecast).state.c_str()].c_str());
-
+        // Forecast 1 (This will be d0 or d1 depending on time)
+        // Adjust the label for "Jutri" to "Danes" if forecast_day_1_idx is 0 (Today)
+        if (id(forecast_day_1_idx) == 0) {
+            it.printf(70, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "Danes");
+        } else { // This means forecast_day_1_idx is 1 (tomorrow)
+            it.printf(70, 230, id(gotham_bold_16), color_text, TextAlign::CENTER, "Jutri");
+        }
+        it.printf(95, 255, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", get_forecast_temp(id(forecast_day_1_idx)));
+        it.printf(95, 275, id(gotham_bold_16), color_text, TextAlign::CENTER, "%.1f °C", get_forecast_low_temp(id(forecast_day_1_idx)));
+        it.printf(19,  245, id(font_mdi_medium), color_text, "%s", weather_icon_map[get_forecast_weather(id(forecast_day_1_idx)).c_str()].c_str());
+        
         // Current outdoor temperature
         it.printf(163, 133, id(gotham_bold_60), color_text, "%.1f °C", id(outdoor_temperatore).state);
         it.printf(34,  110, id(font_mdi_large), color_text, "%s", weather_icon_map[id(current_weather).state.c_str()].c_str());
@@ -493,7 +542,15 @@ sensor:
   ### Outdoor temperature
     entity_id: sensor.wittboy_pro_outdoor_temperature
     id: outdoor_temperatore
-  ### Day 1 temperature forecast
+  ### Day 0 temperature forecast - today
+  - platform: homeassistant
+    id: d0_temperature_forecast
+    entity_id: sensor.d0_temperature_forecast
+  ### Day 0 temperature low forecast
+  - platform: homeassistant
+    id: d0_temperature_low_forecast
+    entity_id: sensor.d0_temperature_low_forecast
+  ### Day 1 temperature forecast - tomorrow
   - platform: homeassistant
     id: d1_temperature_forecast
     entity_id: sensor.d1_temperature_forecast
@@ -540,6 +597,9 @@ text_sensor:
     entity_id: sensor.weathercurrent
   ### Forecast
   - platform: homeassistant
+    id: d0_weather_forecast
+    entity_id: sensor.d0_weather_forecast
+  - platform: homeassistant
     id: d1_weather_forecast
     entity_id: sensor.d1_weather_forecast    
   - platform: homeassistant
@@ -558,6 +618,15 @@ globals:
     type: int
     restore_value: yes
     initial_value: '0'
+  - id: forecast_day_1_idx
+    type: int
+    initial_value: '0' # Default to d0
+  - id: forecast_day_2_idx
+    type: int
+    initial_value: '1' # Default to d1
+  - id: forecast_day_3_idx
+    type: int
+    initial_value: '2' # Default to d2
 
 script:
   - id: update_screen
